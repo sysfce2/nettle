@@ -53,6 +53,7 @@
 /hkdf-test
 /hmac-test
 /knuth-lfib-test
+/ml-kem-test
 /md2-test
 /md4-test
 /md5-test

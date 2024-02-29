@@ -53,6 +53,7 @@
 #include "curve448.h"
 #include "slh-dsa.h"
 #include "sntrup.h"
+#include "ml-kem.h"
 
 #include "nettle-meta.h"
 #include "sexp.h"
@@ -1061,6 +1062,89 @@ bench_sntrup_clear (void *p)
   free (p);
 }
 
+struct ml_kem_ctx
+{
+  const struct ml_kem_params *params;
+  uint8_t public_key[ML_KEM_1024_PUBLIC_KEY_SIZE];
+  uint8_t secret_key[ML_KEM_1024_PRIVATE_KEY_SIZE];
+  uint8_t ciphertext[ML_KEM_1024_CIPHERTEXT_SIZE];
+  struct knuth_lfib_ctx lfib;
+  uint16_t *scratch;
+};
+
+static void *
+bench_ml_kem_init (unsigned size)
+{
+  struct ml_kem_ctx *ctx;
+  uint8_t session_key[ML_KEM_SESSION_KEY_SIZE];
+  uint8_t seed[ML_KEM_SEED_SIZE];
+
+  assert (size == 768 || size == 1024);
+  ctx = xalloc (sizeof (*ctx));
+
+  ctx->params = size == 768 ?
+    nettle_get_ml_kem_768_params () : nettle_get_ml_kem_1024_params ();
+
+  ctx->scratch = xalloc (ml_kem_decap_itch (ctx->params) *
+			 sizeof(uint16_t));
+  knuth_lfib_init (&ctx->lfib, 1);
+  knuth_lfib_random (&ctx->lfib, sizeof (seed), seed);
+
+  ml_kem_generate_keypair (ctx->params, ctx->public_key, ctx->secret_key,
+			   seed, ctx->scratch);
+
+  ml_kem_encap (ctx->params,
+		ctx->public_key,
+		session_key, ctx->ciphertext,
+		&ctx->lfib, (nettle_random_func *)knuth_lfib_random,
+		ctx->scratch);
+
+  return ctx;
+}
+
+static void
+bench_ml_kem_keygen (void *p)
+{
+  struct ml_kem_ctx *ctx = p;
+  uint8_t public_key[ML_KEM_1024_PUBLIC_KEY_SIZE];
+  uint8_t secret_key[ML_KEM_1024_PRIVATE_KEY_SIZE];
+  uint8_t seed[ML_KEM_SEED_SIZE];
+
+  knuth_lfib_init (&ctx->lfib, 1);
+  knuth_lfib_random (&ctx->lfib, sizeof (seed), seed);
+
+  ml_kem_generate_keypair (ctx->params, public_key, secret_key, seed,
+			   ctx->scratch);
+}
+
+static void
+bench_ml_kem_encrypt (void *p)
+{
+  struct ml_kem_ctx *ctx = p;
+  uint8_t session_key[ML_KEM_SESSION_KEY_SIZE];
+
+  ml_kem_encap (ctx->params, ctx->public_key, session_key, ctx->ciphertext,
+		&ctx->lfib, (nettle_random_func *)knuth_lfib_random,
+		ctx->scratch);
+}
+
+static void
+bench_ml_kem_decrypt (void *p)
+{
+  struct ml_kem_ctx *ctx = p;
+  uint8_t session_key[ML_KEM_SESSION_KEY_SIZE];
+  ml_kem_decap (ctx->params, ctx->secret_key, session_key, ctx->ciphertext,
+		ctx->scratch);
+}
+
+static void
+bench_ml_kem_clear (void *p)
+{
+  struct ml_kem_ctx *ctx = p;
+  free (ctx->scratch);
+  free (ctx);
+}
+
 static const struct sign_alg sign_alg_list[] = {
   { "rsa",   1024, bench_rsa_init,   bench_rsa_sign,   bench_rsa_verify,   bench_rsa_clear },
   { "rsa",   2048, bench_rsa_init,   bench_rsa_sign,   bench_rsa_verify,   bench_rsa_clear },
@@ -1100,6 +1184,8 @@ static const struct sign_alg sign_alg_list[] = {
 
 static const struct kem_alg kem_alg_list[] = {
   { "sntrup", 761, bench_sntrup_init, bench_sntrup_keygen, bench_sntrup_encrypt, bench_sntrup_decrypt, bench_sntrup_clear },
+  { "ml_kem", 768, bench_ml_kem_init, bench_ml_kem_keygen, bench_ml_kem_encrypt, bench_ml_kem_decrypt, bench_ml_kem_clear },
+  { "ml_kem", 1024, bench_ml_kem_init, bench_ml_kem_keygen, bench_ml_kem_encrypt, bench_ml_kem_decrypt, bench_ml_kem_clear },
 };
 #define numberof(x)  (sizeof (x) / sizeof ((x)[0]))
 
