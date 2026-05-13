@@ -5915,14 +5915,24 @@ signature is valid, otherwise 0.
 
 @cindex Key-Encapsulation mechanisms
 @cindex KEM
-@cindex sntrup
 
 Key-Encapsulation mechanisms allows a sender to take a public key as
 input and produce (encapsulate) a session key wrapped in ciphertext, and
 the receiver to extract (decapsulate) the session key using its private
 key.
 
-Nettle supports the Streamlined NTRU Prime algorithm @code{sntrup761}.
+Nettle supports the Streamlined NTRU Prime (@code{sntrup761}) and
+@acronym{ML-KEM} algorithms.
+
+
+@menu
+* sntrup761::                   Streamlined NTRU Prime.
+* ML-KEM::                      Module-Lattice-based Key-Encapsulation Mechanism.
+@end menu
+
+@node sntrup761
+@subsection sntrup761
+@cindex sntrup
 
 Nettle defines sntrup761 in @file{<nettle/sntrup.h>}.
 
@@ -5942,20 +5952,110 @@ The size (1039 bytes) of the sntrup761 ciphertext.
 The size (32 bytes) of the sntrup output session key.
 @end defvr
 
-@deftypefun void sntrup761_generate_keypair (uint8_t *@var{pk}, uint8_t *@var{sk}, void *@var{random_ctx}, nettle_random_func *@var{random});
+@deftypefun void sntrup761_generate_keypair (uint8_t *@var{pk}, uint8_t *@var{sk}, void *@var{random_ctx}, nettle_random_func *@var{random})
 Generate a sntrup761 public key @var{pk} and private key @var{sk}, using
 randomness-generator @var{random} with context @var{random_ctx}.
 @end deftypefun
 
-@deftypefun void sntrup761_encap (const uint8_t *@var{pk}, uint8_t *@var{k}, uint8_t *@var{c}, void *@var{random_ctx}, nettle_random_func *@var{random});
+@deftypefun void sntrup761_encap (const uint8_t *@var{pk}, uint8_t *@var{k}, uint8_t *@var{c}, void *@var{random_ctx}, nettle_random_func *@var{random})
 Generate a session key @var{k} and encapsulate it into ciphertext
 @var{c} for the recipient with public-key @var{pk}, using
 randomness-generator @var{random} with context @var{random_ctx}.
 @end deftypefun
 
-@deftypefun void sntrup761_decap (const uint8_t *@var{sk}, uint8_t *@var{k}, const uint8_t *@var{c});
+@deftypefun void sntrup761_decap (const uint8_t *@var{sk}, uint8_t *@var{k}, const uint8_t *@var{c})
 Decapsulate session key @var{k} from ciphertext @var{c} using the
 private key @var{sk}.
+@end deftypefun
+
+@node ML-KEM
+@subsection ML-KEM
+@cindex ML-KEM
+@cindex post-quantum
+@cindex Kyber
+
+ML-KEM stands for Module-Lattice-based Key-Encapsulation Mechanism,
+formerly known as Kyber. As the name suggests, its security is based
+on a lattice problem, called Decisional-Module Learning With Errors
+(D-MLWE). Similarly to SLH-DSA (@pxref{SLH-DSA}), it is a
+``post-quantum'' cryptographic algorithm intended to be secure against
+an attacker with a large working quantum computer. In August 2024, the
+algorithm was standardized by NIST, as FIPS 203,
+@url{https://doi.org/10.6028/NIST.FIPS.203}.
+
+Nettle defines ML-KEM in @file{<nettle/ml-kem.h>}, which supports two
+variants of the algorithm: ML-KEM-768 and ML-KEM-1024.
+
+@defvr Constant ML_KEM_768_PRIVATE_KEY_SIZE
+The size (2400 bytes) of the ML-KEM-768 secret key.
+@end defvr
+
+@defvr Constant ML_KEM_768_PUBLIC_KEY_SIZE
+The size (1184 bytes) of the ML-KEM-768 secret key.
+@end defvr
+
+@defvr Constant ML_KEM_768_CIPHERTEXT_SIZE
+The size (1088 bytes) of the ML-KEM-768 ciphertext.
+@end defvr
+
+@defvr Constant ML_KEM_1024_PRIVATE_KEY_SIZE
+The size (3168 bytes) of the ML-KEM-1024 secret key.
+@end defvr
+
+@defvr Constant ML_KEM_1024_PUBLIC_KEY_SIZE
+The size (1568 bytes) of the ML-KEM-1024 secret key.
+@end defvr
+
+@defvr Constant ML_KEM_1024_CIPHERTEXT_SIZE
+The size (1568 bytes) of the ML-KEM-1024 ciphertext.
+@end defvr
+
+@defvr Constant ML_KEM_SESSION_KEY_SIZE
+The size (32 bytes) of the ML-KEM output session key.
+@end defvr
+
+@defvr Constant ML_KEM_SEED_SIZE
+The size (64 bytes) of the ML-KEM secret seed to be expanded to a
+secret key.
+@end defvr
+
+@deftypefun void ml_kem_generate_keypair (const struct ml_kem_params *@var{params}, uint8_t *@var{pub}, uint8_t *@var{key}, const uint8_t *@var{seed}, uint16_t *@var{scratch});
+Generate an ML-KEM public key @var{pub} and private key @var{key} from
+the given @var{seed} of length @code{ML_KEM_SEED_SIZE}.  Scratch
+buffer @var{scratch} is a user allocated working space required by the
+algorithm.  To determine the required size of the scratch buffer use
+the utility function @code{ml_kem_generate_keypair_itch}.
+@end deftypefun
+
+@deftypefun size_t ml_kem_generate_keypair_itch (const struct ml_kem_params *@var{params})
+Compute the size of the scratch buffer @var{scratch} for generating an
+ML-KEM key pair.
+@end deftypefun
+
+@deftypefun void ml_kem_encap (const struct ml_kem_params *@var{params}, const uint8_t *@var{pub}, uint8_t *@var{secret}, uint8_t *@var{ciphertext}, void *@var{random_ctx}, nettle_random_func *@var{random}, uint16_t *@var{scratch})
+Generate a session key @var{secret} and encapsulate it into ciphertext
+@var{ciphertext} for the recipient with public-key @var{pub}, using
+randomness-generator @var{random} with context @var{random_ctx}.
+Scratch buffer @var{scratch} is a user allocated working space
+required by the algorithm.  To determine the required size of the
+scratch buffer use the utility function
+@code{ml_kem_encap_itch}.
+@end deftypefun
+
+@deftypefun size_t ml_kem_encap_itch (const struct ml_kem_params *@var{params})
+Compute the size of the scratch buffer @var{scratch} for @code{ml_kem_encap}.
+@end deftypefun
+
+@deftypefun void ml_kem_decap (const struct ml_kem_params *@var{params}, const uint8_t *@var{key}, uint8_t *@var{secret}, const uint8_t *@var{ciphertext}, uint16_t *@var{scratch})
+Decapsulate session key @var{secret} from ciphertext @var{ciphertext}
+using the private key @var{key}.  Scratch buffer @var{scratch} is a
+user allocated working space required by the algorithm.  To determine
+the required size of the scratch buffer use the utility function
+@code{ml_kem_decap_itch}.
+@end deftypefun
+
+@deftypefun size_t ml_kem_decap_itch (const struct ml_kem_params *@var{params})
+Compute the size of the scratch buffer @var{scratch} for @code{ml_kem_decap}.
 @end deftypefun
 
 @node Randomness
