@@ -101,7 +101,13 @@ DISTFILES = $(SOURCES) $(CXX_SOURCES) Makefile.in \
 	    slh-dsa-sha2-128s-tc162.msg slh-dsa-sha2-128s-tc162.sig \
 	    slh-dsa-sha2-128f-tc7.msg slh-dsa-sha2-128f-tc7.sig \
 	    sntrup761-tc0.pk sntrup761-tc0.sk sntrup761-tc0.ct \
-	    sntrup761-tc1.pk sntrup761-tc1.sk sntrup761-tc1.ct
+	    sntrup761-tc1.pk sntrup761-tc1.sk sntrup761-tc1.ct \
+	    ml-kem-768-keygen-tc26.pk ml-kem-768-keygen-tc26.sk \
+	    ml-kem-768-encapdecap-tc26.pk ml-kem-768-encapdecap-tc26.sk \
+	    ml-kem-768-encapdecap-tc26.ct \
+	    ml-kem-1024-keygen-tc51.pk ml-kem-1024-keygen-tc51.sk \
+	    ml-kem-1024-encapdecap-tc51.pk ml-kem-1024-encapdecap-tc51.sk \
+	    ml-kem-1024-encapdecap-tc51.ct
 
 all: $(EXTRA_TARGETS)
 

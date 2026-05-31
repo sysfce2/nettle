@@ -30,6 +30,7 @@
 	* testsuite/ml-kem-test.c: New test case.
 	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Add ml-kem-test.c.
 	(TS_SC_NETTLE): Add sc-ml-kem-test.
+	(DISTFILES): Add ml-kem test files.
 	* examples/hogweed-benchmark.c (kem_alg_list): Add benchmarking of
 	ml_kem-768 and ml_kem-1024.
 	* nettle.texinfo (ML-KEM): Add documentation.
