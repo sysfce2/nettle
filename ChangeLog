@@ -1,3 +1,39 @@
+2026-05-31  Niels Möller  <nisse@lysator.liu.se>
+
+	Support for ML-KEM, from Daiki Ueno:
+	* ml-kem.h: New header file.
+	(ML_KEM_SEED_SIZE, ML_KEM_SESSION_KEY_SIZE)
+	(ML_KEM_768_PUBLIC_KEY_SIZE, ML_KEM_768_PRIVATE_KEY_SIZE)
+	(ML_KEM_768_CIPHERTEXT_SIZE, ML_KEM_1024_PUBLIC_KEY_SIZE)
+	(ML_KEM_1024_PRIVATE_KEY_SIZE, ML_KEM_1024_CIPHERTEXT_SIZE): New constants.
+	* ml-kem.c (ml_kem_generate_keypair_itch)
+	(ml_kem_generate_keypair, ml_kem_encap_itch, ml_kem_encap)
+	(ml_kem_decap_itch, ml_kem_decap): New functions.
+	* ml-kem-internal.h: New file.
+	(struct ml_kem_params): New struct.
+	* ml-kem-internal.c (compress, decompress, reduce, mod_sub)
+	(mod_add, poly_into_ntt, poly_from_ntt, poly_mul_ntt)
+	(vector_mul_ntt, matrix_mul_ntt, poly_sample, vector_sample)
+	(matrix_sample, poly_encode, poly_decode, vector_encode)
+	(vector_decode): New static functions.
+	(_ml_kem_inner_generate_keypair_itch)
+	(_ml_kem_inner_generate_keypair, _ml_kem_inner_encrypt_itch)
+	(_ml_kem_inner_encrypt, _ml_kem_inner_decrypt_itch)
+	(_ml_kem_inner_decrypt): New internal functions.
+	* ml-kem-768.c (nettle_get_ml_kem_768_params): New file, new function.
+	* ml-kem-1024.c (nettle_get_ml_kem_1024_params): New file, new function.
+	* Makefile.in (nettle_SOURCES): Add ml-kem.c, ml-kem-768.c,
+	ml-kem-1024.c, and ml-kem-internal.c.
+	(HEADERS): Add ml-kem.h.
+	(DISTFILES): Add ml-kem-internal.h.
+	* testsuite/sc-ml-kem-test: New test case.
+	* testsuite/ml-kem-test.c: New test case.
+	* testsuite/Makefile.in (TS_NETTLE_SOURCES): Add ml-kem-test.c.
+	(TS_SC_NETTLE): Add sc-ml-kem-test.
+	* examples/hogweed-benchmark.c (kem_alg_list): Add benchmarking of
+	ml_kem-768 and ml_kem-1024.
+	* nettle.texinfo (ML-KEM): Add documentation.
+
 2026-05-12  Niels Möller  <nisse@lysator.liu.se>
 
 	Avoid gcc-15 warnings on missing NUL terminators. Based on patch
