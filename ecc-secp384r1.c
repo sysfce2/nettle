@@ -40,6 +40,7 @@
 #include <assert.h>
 
 #include "ecc-internal.h"
+#include "nettle-internal.h"
 
 #define USE_REDC 0
 
