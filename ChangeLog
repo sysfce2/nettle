@@ -1,3 +1,9 @@
+2026-06-04  Niels Möller  <nisse@lysator.liu.se>
+
+	* ecc-secp256r1.c (ecc_secp256r1_modq): Rewrite adjustment step,
+	to work around gcc on riscv64 generating an unwanted branch
+	instruction. Suggested by Felix Yan.
+
 2026-05-31  Niels Möller  <nisse@lysator.liu.se>
 
 	Support for ML-KEM, from Daiki Ueno:
