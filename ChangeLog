@@ -1,3 +1,15 @@
+2026-06-05  Niels Möller  <nisse@lysator.liu.se>
+
+	* ml-kem-internal.c (compress, reduce, mod_sub, mod_add): Use
+	assert_maybe to back up input and output expectations.
+
+	* testsuite/ml-kem-test.c (test_ml_kem_pairwise): Take randomness
+	source as argument.
+	(test_randomized): New function, using test_get_seed for
+	initializing the pseudo randomness generator.
+	(test_main) [WITH_EXTRA_ASSERTS]: Skip side-channel tests.
+	(test_main): Call test_randomized.
+
 2026-06-04  Niels Möller  <nisse@lysator.liu.se>
 
 	* nettle-internal.h (assert_maybe): Move macro here, replacing old

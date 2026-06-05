@@ -141,9 +141,9 @@ test_ml_kem_encap_decap (const struct ml_kem_params *params,
 }
 
 static void
-test_ml_kem_pairwise (const struct ml_kem_params *params)
+test_ml_kem_pairwise (const struct ml_kem_params *params,
+		      void *random_ctx, nettle_random_func *random)
 {
-  struct knuth_lfib_ctx lfib;
   uint8_t *pub;
   uint8_t *key;
   uint8_t *ciphertext;
@@ -152,21 +152,18 @@ test_ml_kem_pairwise (const struct ml_kem_params *params)
   uint8_t secret2[32];
   uint16_t *scratch;
 
-  knuth_lfib_init(&lfib, 1111);
-
   pub = xalloc (params->public_key_size);
   key = xalloc (params->private_key_size);
   ciphertext = xalloc (params->ciphertext_size);
 
   scratch = xalloc (ml_kem_generate_keypair_itch (params) * sizeof(uint16_t));
-  knuth_lfib_random (&lfib, sizeof (seed), seed);
+  random (random_ctx, sizeof (seed), seed);
   ml_kem_generate_keypair (params, pub, key, seed, scratch);
   free (scratch);
 
   scratch = xalloc (ml_kem_encap_itch (params) * sizeof(uint16_t));
   ml_kem_encap (params, pub, secret, ciphertext,
-		&lfib, (nettle_random_func *) knuth_lfib_random,
-		scratch);
+		random_ctx, random, scratch);
   free (scratch);
 
   scratch = xalloc (ml_kem_decap_itch (params) * sizeof(uint16_t));
@@ -180,9 +177,32 @@ test_ml_kem_pairwise (const struct ml_kem_params *params)
   free (ciphertext);
 }
 
+static void
+test_randomized (void)
+{
+  struct knuth_lfib_ctx lfib;
+  unsigned count;
+  unsigned end_count = test_side_channel ? 10 : 1000;
+  /* FIXME: Use a stronger randomness generator with 64-bit seed. */
+  knuth_lfib_init (&lfib, test_get_seed ());
+  end_count = test_side_channel ? 10 : 1000;
+  for (count = 0; count < end_count; count++)
+    {
+      test_ml_kem_pairwise (nettle_get_ml_kem_768_params (),
+			    &lfib, (nettle_random_func *) knuth_lfib_random);
+      test_ml_kem_pairwise (nettle_get_ml_kem_1024_params (),
+			    &lfib, (nettle_random_func *) knuth_lfib_random);
+    }
+}
+
 void
 test_main (void)
 {
+#if WITH_EXTRA_ASSERTS
+  if (test_side_channel)
+    SKIP();
+#endif
+
   /* Test vectors from: https://github.com/usnistgov/ACVP-Server/tree/d98cad66639bf9d0822129c4bcae7a169fcf9ca6/gen-val/json-files/ML-KEM-keyGen-FIPS203 */
 
   /* tcId: 26 */
@@ -217,6 +237,5 @@ test_main (void)
 			   read_hex_file ("ml-kem-1024-encapdecap-tc51.ct", ML_KEM_1024_CIPHERTEXT_SIZE),
 			   SHEX ("5D537CD0EF7B58F0FE95370473B96878F138ECC259ADFBF77EBD7328B822D9D9"));
 
-  test_ml_kem_pairwise (nettle_get_ml_kem_768_params ());
-  test_ml_kem_pairwise (nettle_get_ml_kem_1024_params ());
+  test_randomized ();
 }

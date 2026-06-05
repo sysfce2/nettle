@@ -35,10 +35,12 @@
 # include "config.h"
 #endif
 
+#include <string.h>
+
 #include "ml-kem-internal.h"
 
 #include "sha3.h"
-#include <string.h>
+#include "nettle-internal.h"
 
 #define Q 3329
 #define Q_BITS 12
@@ -115,6 +117,7 @@ PRF (struct sha3_ctx *ctx,
 static inline uint16_t
 compress (uint16_t x, unsigned int d)
 {
+  assert_maybe (x < Q);
   return ((UINT64_C(20642679) * ((x << d) + (Q >> 1)) >> 36) & ((1 << d) - 1));
 }
 
@@ -132,11 +135,13 @@ static inline uint16_t
 reduce (uint64_t a)
 {
   uint64_t mask;
+  assert_maybe (a < Q*Q);
 
   a -= ((a * 5039) >> (Q_BITS << 1)) * Q;
   mask = -(uint64_t) (a >= Q);
-
-  return a - (Q & mask);
+  a -= (Q & mask);
+  assert_maybe (a < Q);
+  return a;
 }
 
 /* Calculate a - b mod Q, where 0 <= a < Q and 0 <= b <= Q */
@@ -144,6 +149,8 @@ static inline uint16_t
 mod_sub (uint16_t a, uint16_t b)
 {
   uint16_t mask;
+  assert_maybe (a < Q);
+  assert_maybe (b <= Q);
 
   mask = -(uint16_t) (a < b);
 
@@ -154,6 +161,8 @@ mod_sub (uint16_t a, uint16_t b)
 static inline uint16_t
 mod_add (uint16_t a, uint16_t b)
 {
+  assert_maybe (a < Q);
+  assert_maybe (b < Q);
   return mod_sub (a, Q - b);
 }
 
