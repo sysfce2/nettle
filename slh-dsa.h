@@ -100,19 +100,19 @@ slh_dsa_sha2_128f_generate_keypair (uint8_t *pub, uint8_t *key,
 				    void *random_ctx, nettle_random_func *random);
 
 /* Only the "pure" and deterministic variant. */
-void
+int
 slh_dsa_shake_128s_sign (const uint8_t *pub, const uint8_t *priv,
 			 size_t length, const uint8_t *msg,
 			 uint8_t *signature);
-void
+int
 slh_dsa_shake_128f_sign (const uint8_t *pub, const uint8_t *priv,
 			 size_t length, const uint8_t *msg,
 			 uint8_t *signature);
-void
+int
 slh_dsa_sha2_128s_sign (const uint8_t *pub, const uint8_t *priv,
 			size_t length, const uint8_t *msg,
 			uint8_t *signature);
-void
+int
 slh_dsa_sha2_128f_sign (const uint8_t *pub, const uint8_t *priv,
 			size_t length, const uint8_t *msg,
 			uint8_t *signature);

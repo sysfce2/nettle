@@ -5837,6 +5837,18 @@ traversal of all leaves of the corresponding Merkle trees, and this is
 several orders of magnitude slower than signing using elliptic curves or
 RSA.
 
+The signing operation can recompute the top-level Merkle tree root
+almost for free. Nettle's SLH-DSA signing functions do that, and compare
+the resulting root hash to the provided public key. If the root hash is
+not as expected, the signing operation fails, and the returned signature
+is cleared to all zeros before return. This check is intended to detect
+invalid inputs, accidental corruption, and some types of software or
+hardware bugs that could affect the computation, but it is not a solid
+defense against deliberate fault injection attacks. Checking the return
+value from these signing functions is not strictly required; it's the
+application's choice if it prefers to handle this error, or pass on an
+invalid all-zero signature.
+
 Nettle currently implements the four SLH-DSA variants designed for
 ``128-bit security'': There's the choice of either SHA256 (in the SHA2
 family) or SHAKE256 (in the SHA3 family) as the underlying hash
@@ -5893,13 +5905,14 @@ typically called with @var{root} = @var{public_seed} +
 @code{SLH_DSA_128_SEED_SIZE}.
 @end deftypefun
 
-@deftypefun void slh_dsa_shake_128s_sign (const uint8_t *@var{pub}, const uint8_t *@var{priv}, size_t @var{length}, const uint8_t *@var{msg}, uint8_t *@var{signature})
-@deftypefunx void slh_dsa_shake_128f_sign (const uint8_t *@var{pub}, const uint8_t *@var{priv}, size_t @var{length}, const uint8_t *@var{msg}, uint8_t *@var{signature})
-@deftypefunx void slh_dsa_sha2_128s_sign (const uint8_t *@var{pub}, const uint8_t *@var{priv}, size_t @var{length}, const uint8_t *@var{msg}, uint8_t *@var{signature})
-@deftypefunx void slh_dsa_sha2_128f_sign (const uint8_t *@var{pub}, const uint8_t *@var{priv}, size_t @var{length}, const uint8_t *@var{msg}, uint8_t *@var{signature})
+@deftypefun int slh_dsa_shake_128s_sign (const uint8_t *@var{pub}, const uint8_t *@var{priv}, size_t @var{length}, const uint8_t *@var{msg}, uint8_t *@var{signature})
+@deftypefunx int slh_dsa_shake_128f_sign (const uint8_t *@var{pub}, const uint8_t *@var{priv}, size_t @var{length}, const uint8_t *@var{msg}, uint8_t *@var{signature})
+@deftypefunx int slh_dsa_sha2_128s_sign (const uint8_t *@var{pub}, const uint8_t *@var{priv}, size_t @var{length}, const uint8_t *@var{msg}, uint8_t *@var{signature})
+@deftypefunx int slh_dsa_sha2_128f_sign (const uint8_t *@var{pub}, const uint8_t *@var{priv}, size_t @var{length}, const uint8_t *@var{msg}, uint8_t *@var{signature})
 Signs a message using the provided key pair. The size of the resulting
 signature is @code{SLH_DSA_128S_SIGNATURE_SIZE} or
-@code{SLH_DSA_128F_SIGNATURE_SIZE} for respective functions.
+@code{SLH_DSA_128F_SIGNATURE_SIZE} for respective functions. Returns 1
+on success, 0 on failure (see above on what failure means).
 @end deftypefun
 
 @deftypefun int slh_dsa_shake_128s_verify (const uint8_t *@var{pub}, size_t @var{length}, const uint8_t *@var{msg}, const uint8_t *@var{signature})

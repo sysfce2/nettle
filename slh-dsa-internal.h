@@ -282,7 +282,7 @@ _slh_dsa_pure_rdigest (const struct slh_hash *hash,
 		       size_t length, const uint8_t *msg,
 		       uint8_t *randomizer, size_t digest_size, uint8_t *digest);
 
-void
+int
 _slh_dsa_sign (const struct slh_dsa_params *params,
 	       const struct slh_hash *hash,
 	       const uint8_t *pub, const uint8_t *priv,

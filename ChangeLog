@@ -1,3 +1,18 @@
+2026-06-30  Niels Möller  <nisse@lysator.liu.se>
+
+	* slh-dsa.c (_slh_dsa_sign): Change return type from void to int.
+	After checking expected root hash with memeql_sec, return result
+	rather than asserting that it is true.
+	* slh-dsa-sha2-128f.c (slh_dsa_sha2_128f_sign): Add return value,
+	return success/failure from _slh_dsa_sign, and on failure, clear
+	output signature to all zeros.
+	* slh-dsa-sha2-128s.c (slh_dsa_sha2_128s_sign): Likewise.
+	* slh-dsa-shake-128f.c (slh_dsa_shake_128f_sign): Likewise.
+	* slh-dsa-shake-128s.c (slh_dsa_shake_128s_sign): Likewise.
+	* testsuite/slh-dsa-test.c (test_slh_dsa): Check that signing
+	function returns failure, if public or private key is corrupted.
+	* nettle.texinfo (SLH-DSA): Update documentation.
+
 2026-06-05  Niels Möller  <nisse@lysator.liu.se>
 
 	* ml-kem-internal.c (compress, reduce, mod_sub, mod_add): Use

@@ -255,16 +255,15 @@ test_slh_dsa_128_root (root_func *f,
   ASSERT (MEMEQ (sizeof (pub), pub, exp_pub->data));
 }
 
-typedef void sign_func (const uint8_t *pub, const uint8_t *priv,
-			size_t length, const uint8_t *msg,
-			uint8_t *signature);
+typedef int sign_func (const uint8_t *pub, const uint8_t *priv,
+		       size_t length, const uint8_t *msg,
+		       uint8_t *signature);
 typedef int verify_func (const uint8_t *pub,
 			 size_t length, const uint8_t *msg,
 			 const uint8_t *signature);
 struct slh_dsa_alg
 {
   const char *name;
-  size_t key_size;
   size_t signature_size;
   sign_func *sign;
   verify_func *verify;
@@ -273,7 +272,6 @@ struct slh_dsa_alg
 static const struct slh_dsa_alg
 slh_dsa_shake_128s = {
   "slh_dsa_shake_128s",
-  SLH_DSA_128_KEY_SIZE,
   SLH_DSA_128S_SIGNATURE_SIZE,
   slh_dsa_shake_128s_sign,
   slh_dsa_shake_128s_verify,
@@ -282,7 +280,6 @@ slh_dsa_shake_128s = {
 static const struct slh_dsa_alg
 slh_dsa_shake_128f = {
   "slh_dsa_shake_128f",
-  SLH_DSA_128_KEY_SIZE,
   SLH_DSA_128F_SIGNATURE_SIZE,
   slh_dsa_shake_128f_sign,
   slh_dsa_shake_128f_verify,
@@ -291,7 +288,6 @@ slh_dsa_shake_128f = {
 static const struct slh_dsa_alg
 slh_dsa_sha2_128s = {
   "slh_dsa_sha2_128s",
-  SLH_DSA_128_KEY_SIZE,
   SLH_DSA_128S_SIGNATURE_SIZE,
   slh_dsa_sha2_128s_sign,
   slh_dsa_sha2_128s_verify,
@@ -300,7 +296,6 @@ slh_dsa_sha2_128s = {
 static const struct slh_dsa_alg
 slh_dsa_sha2_128f = {
   "slh_dsa_sha2_128f",
-  SLH_DSA_128_KEY_SIZE,
   SLH_DSA_128F_SIGNATURE_SIZE,
   slh_dsa_sha2_128f_sign,
   slh_dsa_sha2_128f_verify,
@@ -312,11 +307,13 @@ test_slh_dsa (const struct slh_dsa_alg *alg,
 	      const struct tstring *msg, const struct tstring *ref)
 {
   uint8_t *sig = xalloc (alg->signature_size);
-  ASSERT (pub->length == alg->key_size);
-  ASSERT (priv->length == alg->key_size);
+  uint8_t bad_key[SLH_DSA_128_KEY_SIZE];
+
+  ASSERT (pub->length == SLH_DSA_128_KEY_SIZE);
+  ASSERT (priv->length == SLH_DSA_128_KEY_SIZE);
   ASSERT (ref->length == alg->signature_size);
 
-  alg->sign (pub->data, priv->data, msg->length, msg->data, sig);
+  ASSERT (alg->sign (pub->data, priv->data, msg->length, msg->data, sig));
   if (! MEMEQ (alg->signature_size, sig, ref->data))
     {
       size_t i;
@@ -333,6 +330,16 @@ test_slh_dsa (const struct slh_dsa_alg *alg,
     ASSERT (!alg->verify (pub->data, msg->length-1, msg->data, sig));
   sig[alg->signature_size-1] ^= 1;
   ASSERT (!alg->verify (pub->data, msg->length, msg->data, sig));
+
+  memcpy (bad_key, pub->data, sizeof (bad_key));
+  bad_key[5] ^= 1; /* Modifies public seed */
+  ASSERT (!alg->sign (bad_key, priv->data, msg->length, msg->data, sig));
+  ASSERT (sig[alg->signature_size - 1] == 0);
+
+  memcpy (bad_key, priv->data, sizeof (bad_key));
+  bad_key[5] ^= 1; /* Modifies private seed */
+  ASSERT (!alg->sign (pub->data, bad_key, msg->length, msg->data, sig));
+  ASSERT (sig[alg->signature_size - 1] == 0);
 
   free (sig);
 }

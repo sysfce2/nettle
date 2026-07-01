@@ -901,7 +901,7 @@ struct slh_dsa_ctx
   uint8_t key[SLH_DSA_128_KEY_SIZE];
   uint8_t msg[10];
   uint8_t *sig;
-  void (*sign)(const uint8_t *pub, const uint8_t *priv,
+  int (*sign)(const uint8_t *pub, const uint8_t *priv,
 	       size_t length, const uint8_t *msg,
 	       uint8_t *signature);
   int (*verify)(const uint8_t *pub,
@@ -985,7 +985,8 @@ static void
 bench_slh_dsa_sign (void *p)
 {
   struct slh_dsa_ctx *ctx = p;
-  ctx->sign (ctx->pub, ctx->key, sizeof (ctx->msg), ctx->msg, ctx->sig);
+  int res = ctx->sign (ctx->pub, ctx->key, sizeof (ctx->msg), ctx->msg, ctx->sig);
+  assert (res);
 }
 
 static void

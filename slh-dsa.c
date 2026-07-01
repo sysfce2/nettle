@@ -35,7 +35,6 @@
 # include "config.h"
 #endif
 
-#include <assert.h>
 #include <string.h>
 
 #include "memops.h"
@@ -66,7 +65,7 @@ _slh_dsa_pure_rdigest (const struct slh_hash *hash,
   _slh_dsa_pure_digest (hash, pub, length, msg, randomizer, digest_size, digest);
 }
 
-void
+int
 _slh_dsa_sign (const struct slh_dsa_params *params,
 	       const struct slh_hash *hash,
 	       const uint8_t *pub, const uint8_t *priv,
@@ -103,7 +102,7 @@ _slh_dsa_sign (const struct slh_dsa_params *params,
 
       _xmss_sign (&merkle_ctx, params->xmss.h, leaf_idx, root, signature, root);
     }
-  assert (memeql_sec (root, pub + _SLH_DSA_128_SIZE, sizeof (root)));
+  return memeql_sec (root, pub + _SLH_DSA_128_SIZE, sizeof (root));
 }
 
 int

@@ -35,6 +35,8 @@
 # include "config.h"
 #endif
 
+#include <string.h>
+
 #include "slh-dsa.h"
 #include "slh-dsa-internal.h"
 
@@ -65,19 +67,25 @@ slh_dsa_sha2_128f_generate_keypair (uint8_t *pub, uint8_t *priv,
 }
 
 /* Only the "pure" and deterministic variant. */
-void
+int
 slh_dsa_sha2_128f_sign (const uint8_t *pub, const uint8_t *priv,
 			 size_t length, const uint8_t *msg,
 			 uint8_t *signature)
 {
   struct sha256_ctx tree_ctx, scratch_ctx;
   uint8_t digest[SLH_DSA_M];
+  int res;
+
   _slh_dsa_pure_rdigest (&_slh_hash_sha256,
 			 pub, priv + _SLH_DSA_128_SIZE, length, msg,
 			 signature, sizeof (digest), digest);
-  _slh_dsa_sign (&_slh_dsa_128f_params, &_slh_hash_sha256,
-		 pub, priv, digest, signature + _SLH_DSA_128_SIZE,
-		 &tree_ctx, &scratch_ctx);
+  res = _slh_dsa_sign (&_slh_dsa_128f_params, &_slh_hash_sha256,
+		       pub, priv, digest, signature + _SLH_DSA_128_SIZE,
+		       &tree_ctx, &scratch_ctx);
+  if (!res)
+    memset (signature, 0, SLH_DSA_128F_SIGNATURE_SIZE);
+
+  return res;
 }
 
 int
